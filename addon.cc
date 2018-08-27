@@ -77,13 +77,13 @@ int SaveBitmap(HBITMAP &hbm, ULONG quality, int width, int height) {
   Bitmap * finalBmp;
 
   if (width && height) {
-    finalBmp = new Bitmap(width, height, original->GetPixelFormat());
+    finalBmp = new Bitmap(width, height, originalBmp->GetPixelFormat());
     Graphics * graphics = Graphics::FromImage(finalBmp);
     graphics->SetSmoothingMode(SmoothingModeDefault);
     graphics->SetInterpolationMode(InterpolationModeBicubic);
-    graphics->DrawImage(original, 0, 0, width, height);
+    graphics->DrawImage(originalBmp, 0, 0, width, height);
   } else {
-    finalBmp = original;
+    finalBmp = originalBmp;
   }
 
   if (finalBmp->Save(L"screenshot.jpg", &encoderClsid, &encoderParameters) != Ok) {
