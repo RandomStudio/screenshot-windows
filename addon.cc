@@ -134,7 +134,10 @@ int32_t GetScreenshotResult(WCHAR *filename, ULONG quality, int width, int heigh
     goto done;
   }
 
-  result = SaveBitmap(hbmScreen, filename, quality, width, height);
+  bool resize = width != screenWidth || height != screenHeight;
+  int bmpWidth = resize ? width : NULL;
+  int bmpHeight = resize ? height : NULL;
+  result = SaveBitmap(hbmScreen, filename, quality, bmpWidth, bmpHeight);
 
 done:
   DeleteObject(hbmScreen);
