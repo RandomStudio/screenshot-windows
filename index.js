@@ -8,7 +8,7 @@ const errorCodes = new Map([
 	[-5, 'Failed to bit block transfer into compatible memory device context'],
 ]);
 
-const unknownError = 'Result did not match with a valid rotation or known error code';
+const unknownError = 'Result did not match with a known error code';
 
 // FUNCTION FOR TESTING WITH COMMAND LINE ARGUMENTS
 
