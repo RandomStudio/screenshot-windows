@@ -47,6 +47,10 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   return -1; // Failure
 }
 
+int32_t GetScreenshotResult() {
+  return 0;
+}
+
 // EXPOSED FUNCTIONS
 
 void GetWidth(const FunctionCallbackInfo<Value>& args) {
@@ -58,7 +62,7 @@ void GetHeight(const FunctionCallbackInfo<Value>& args) {
 }
 
 void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
-  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), 0));
+  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetScreenshotResult()));
 }
 
 // INITIALIZE
