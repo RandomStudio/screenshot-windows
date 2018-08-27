@@ -47,6 +47,30 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   return -1; // Failure
 }
 
+int SaveBitmap(HBITMAP &hbm) {
+  int result = 0;
+
+   // Initialize GDI+
+  GdiplusStartupInput gdiplusStartupInput;
+  ULONG_PTR gdiplusToken;
+  GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+  // Get the JPEG encoder class identifier
+  CLSID encoderClsid;
+  if (GetEncoderClsid(L"image/jpeg", &encoderClsid) < 0) {
+    result = ERR_NO_JPEG_ENCODER;
+    goto done;
+  }
+
+  // Create the Bitmap and save it to disk
+  Bitmap * bitmap = new Bitmap(hbm, NULL);
+  bitmap->Save(L"screenshot.jpg", &encoderClsid);
+
+done:
+  GdiplusShutdown(gdiplusToken);
+  return result;
+}
+
 int32_t GetScreenshotResult() {
   return 0;
 }
