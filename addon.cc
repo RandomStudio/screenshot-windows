@@ -1,5 +1,8 @@
-#define ERR_NO_JPEG_ENCODER -1
-#define ERR_FAILED_TO_SAVE  -2
+#define ERR_NO_JPEG_ENCODER       -1
+#define ERR_FAILED_TO_SAVE        -2
+#define ERR_FAILED_TO_CREATE_DC   -3
+#define ERR_FAILED_TO_CREATE_BMP  -4
+#define ERR_FAILED_TO_BIT_BLT     -5
 
 #include "minmax.h"
 #include <node.h>
@@ -96,8 +99,48 @@ done:
   return result;
 }
 
-int32_t GetScreenshotResult() {
-  return 0;
+int32_t GetScreenshotResult(ULONG quality, int width, int height) {
+  int result = 0;
+  int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+  int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+  HDC hdcScreen;
+  HDC hdcMemDC = NULL;
+  HBITMAP hbmScreen = NULL;
+
+  // Retrieve the handle to the display device context for the screen
+  hdcScreen = GetDC(NULL);
+
+  // Create a compatible DC which is used in a BitBlt from the window DC
+  hdcMemDC = CreateCompatibleDC(hdcScreen);
+  if(!hdcMemDC) {
+    result = ERR_FAILED_TO_CREATE_DC;
+    goto done;
+  }
+
+  // Create a compatible bitmap from the Window DC
+  hbmScreen = CreateCompatibleBitmap(hdcScreen, screenWidth, screenHeight);
+  if (!hbmScreen) {
+    result = ERR_FAILED_TO_CREATE_BMP;
+    goto done;
+  }
+
+  // Select the compatible bitmap into the compatible memory DC
+  SelectObject(hdcMemDC, hbmScreen);
+
+  // Bit block transfer into our compatible memory DC
+  if(!BitBlt(hdcMemDC, 0, 0, screenWidth, screenHeight, hdcScreen, 0, 0, SRCCOPY)) {
+    result = ERR_FAILED_TO_BIT_BLT;
+    goto done;
+  }
+
+  result = SaveBitmap(hbmScreen, quality, width, height);
+
+done:
+  DeleteObject(hbmScreen);
+  DeleteObject(hdcMemDC);
+  ReleaseDC(NULL, hdcScreen);
+  return result;
 }
 
 // EXPOSED FUNCTIONS
@@ -111,7 +154,7 @@ void GetHeight(const FunctionCallbackInfo<Value>& args) {
 }
 
 void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
-  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetScreenshotResult()));
+  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetScreenshotResult(80, 1280, 720)));
 }
 
 // INITIALIZE

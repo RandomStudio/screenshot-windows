@@ -2,6 +2,10 @@ const addon = require('bindings')('addon.node');
 
 const errorCodes = new Map([
 	[-1, 'GDI+ cannot find the JPEG encoder'],
+	[-2, 'Failed to save the JPEG to disk'],
+	[-3, 'Failed to create a compatible memory device context'],
+	[-4, 'Failed to create a compatible bitmap from the Window device context'],
+	[-5, 'Failed to bit block transfer into compatible memory device context'],
 ]);
 
 const unknownError = 'Result did not match with a valid rotation or known error code';
