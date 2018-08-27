@@ -16,6 +16,10 @@ if (process.argv.includes('getHeight')) {
 	console.log('height:', addon.getHeight());
 }
 
+if (process.argv.includes('takeScreenshot')) {
+	console.log('result:', addon.takeScreenshot());
+}
+
 // EXPOSED FUNCTION
 
 module.exports = () => {

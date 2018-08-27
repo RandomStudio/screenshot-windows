@@ -6,6 +6,7 @@
   "scripts": {
     "getWidth": "node . getWidth",
     "getHeight": "node . getHeight",
+    "takeScreenshot": "node . takeScreenshot",
     "build": "node-gyp configure && node-gyp build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
