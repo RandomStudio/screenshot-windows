@@ -1,4 +1,5 @@
 #define ERR_NO_JPEG_ENCODER -1
+#define ERR_FAILED_TO_SAVE  -2
 
 #include "minmax.h"
 #include <node.h>
@@ -47,7 +48,7 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   return -1; // Failure
 }
 
-int SaveBitmap(HBITMAP &hbm) {
+int SaveBitmap(HBITMAP &hbm, ULONG quality) {
   int result = 0;
 
    // Initialize GDI+
@@ -55,16 +56,28 @@ int SaveBitmap(HBITMAP &hbm) {
   ULONG_PTR gdiplusToken;
   GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+  CLSID             encoderClsid;
+  EncoderParameters encoderParameters;
+
   // Get the JPEG encoder class identifier
-  CLSID encoderClsid;
   if (GetEncoderClsid(L"image/jpeg", &encoderClsid) < 0) {
     result = ERR_NO_JPEG_ENCODER;
     goto done;
   }
 
-  // Create the Bitmap and save it to disk
+  // Set quality for the JPEG encoder
+  encoderParameters.Count = 1;
+  encoderParameters.Parameter[0].Guid = EncoderQuality;
+  encoderParameters.Parameter[0].Type = EncoderParameterValueTypeLong;
+  encoderParameters.Parameter[0].NumberOfValues = 1;
+  encoderParameters.Parameter[0].Value = &quality;
+
+  // Create the Bitmap and save it to disk as JPEG
   Bitmap * bitmap = new Bitmap(hbm, NULL);
-  bitmap->Save(L"screenshot.jpg", &encoderClsid);
+  if (bitmap->Save(L"screenshot.jpg", &encoderClsid, &encoderParameters) != Ok) {
+    result = ERR_FAILED_TO_SAVE;
+    goto done;
+  }
 
 done:
   GdiplusShutdown(gdiplusToken);
