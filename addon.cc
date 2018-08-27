@@ -1,3 +1,5 @@
+#define ERR_NO_JPEG_ENCODER -1
+
 #include <node.h>
 #include <windows.h>
 
