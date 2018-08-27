@@ -48,7 +48,7 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   return -1; // Failure
 }
 
-int SaveBitmap(HBITMAP &hbm, ULONG quality) {
+int SaveBitmap(HBITMAP &hbm, int width, int height, ULONG quality) {
   int result = 0;
 
    // Initialize GDI+
@@ -73,8 +73,15 @@ int SaveBitmap(HBITMAP &hbm, ULONG quality) {
   encoderParameters.Parameter[0].Value = &quality;
 
   // Create the Bitmap and save it to disk as JPEG
-  Bitmap * bitmap = new Bitmap(hbm, NULL);
-  if (bitmap->Save(L"screenshot.jpg", &encoderClsid, &encoderParameters) != Ok) {
+  Bitmap * original = new Bitmap(hbm, NULL);
+  Bitmap * resized = new Bitmap(width, height, original->GetPixelFormat());
+
+  Graphics * graphics = Graphics::FromImage(resized);
+  graphics->SetSmoothingMode(SmoothingModeDefault);
+  graphics->SetInterpolationMode(InterpolationModeBicubic);
+  graphics->DrawImage(original, 0, 0, width, height);
+
+  if (resized->Save(L"screenshot.jpg", &encoderClsid, &encoderParameters) != Ok) {
     result = ERR_FAILED_TO_SAVE;
     goto done;
   }
