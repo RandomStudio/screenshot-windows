@@ -51,7 +51,7 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   return -1; // Failure
 }
 
-int SaveBitmap(HBITMAP &hbm, ULONG quality, int width, int height) {
+int SaveBitmap(HBITMAP &hbm, WCHAR *filename, ULONG quality, int width, int height) {
   int result = 0;
 
    // Initialize GDI+
@@ -89,7 +89,7 @@ int SaveBitmap(HBITMAP &hbm, ULONG quality, int width, int height) {
     finalBmp = originalBmp;
   }
 
-  if (finalBmp->Save(L"screenshot.jpg", &encoderClsid, &encoderParameters) != Ok) {
+  if (finalBmp->Save(filename, &encoderClsid, &encoderParameters) != Ok) {
     result = ERR_FAILED_TO_SAVE;
     goto done;
   }
@@ -99,7 +99,7 @@ done:
   return result;
 }
 
-int32_t GetScreenshotResult(ULONG quality, int width, int height) {
+int32_t GetScreenshotResult(WCHAR *filename, ULONG quality, int width, int height) {
   int result = 0;
   int screenWidth = GetSystemMetrics(SM_CXSCREEN);
   int screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -134,7 +134,7 @@ int32_t GetScreenshotResult(ULONG quality, int width, int height) {
     goto done;
   }
 
-  result = SaveBitmap(hbmScreen, quality, width, height);
+  result = SaveBitmap(hbmScreen, filename, quality, width, height);
 
 done:
   DeleteObject(hbmScreen);
@@ -154,7 +154,7 @@ void GetHeight(const FunctionCallbackInfo<Value>& args) {
 }
 
 void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
-  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetScreenshotResult(80, 1280, 720)));
+  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetScreenshotResult(L"screenshot.jpg", 80, 1280, 720)));
 }
 
 // INITIALIZE
