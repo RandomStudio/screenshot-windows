@@ -14,6 +14,14 @@ using v8::Value;
 
 // EXPOSED FUNCTIONS
 
+void GetWidth(const FunctionCallbackInfo<Value>& args) {
+  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetSystemMetrics(SM_CXSCREEN)));
+}
+
+void GetHeight(const FunctionCallbackInfo<Value>& args) {
+  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetSystemMetrics(SM_CYSCREEN)));
+}
+
 void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
   return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), 0));
 }
@@ -21,6 +29,8 @@ void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
 // INITIALIZE
 
 void Initialize(Local<Object> exports) {
+  NODE_SET_METHOD(exports, "getWidth", GetWidth);
+  NODE_SET_METHOD(exports, "getHeight", GetHeight);
   NODE_SET_METHOD(exports, "takeScreenshot", TakeScreenshot);
 }
 

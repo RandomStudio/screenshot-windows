@@ -7,6 +7,14 @@ const unknownError = 'Result did not match with a valid rotation or known error 
 
 // FUNCTION FOR TESTING WITH COMMAND LINE ARGUMENTS
 
+if (process.argv.includes('getWidth')) {
+	console.log('width:', addon.getWidth());
+}
+
+if (process.argv.includes('getHeight')) {
+	console.log('height:', addon.getHeight());
+}
+
 // EXPOSED FUNCTION
 
 module.exports = () => {

@@ -4,6 +4,8 @@
   "description": "Utility for taking screenshots on Windows",
   "main": "index.js",
   "scripts": {
+    "getWidth": "node . getWidth",
+    "getHeight": "node . getHeight",
     "build": "node-gyp configure && node-gyp build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
