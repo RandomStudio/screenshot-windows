@@ -26,6 +26,15 @@ using v8::Value;
 
 // PRIVATE FUNCTIONS
 
+WCHAR * V8StringToWCHAR(Isolate* isolate, Local<String> stringV8) {
+  String::Utf8Value stringUtf8(isolate, stringV8);
+  size_t            stringWcharLength = std::strlen(*stringUtf8) + 1;
+  WCHAR *           stringWchar = new WCHAR[stringWcharLength];
+  size_t            convertedChars = 0;
+  mbstowcs_s(&convertedChars, stringWchar, stringWcharLength, *stringUtf8, _TRUNCATE);
+  return stringWchar;
+}
+
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   UINT num = 0;  // number of image encoders
   UINT size = 0; // size of the image encoder array in bytes
@@ -169,16 +178,11 @@ void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
     return;
   }
 
-  String::Utf8Value filenameUtf8(isolate, args[0]->ToString());
-  size_t            filenameWcLength = std::strlen(*filenameUtf8) + 1;
-  WCHAR *           filenameWc = new WCHAR[filenameWcLength];
-  size_t            convertedChars = 0;
-  mbstowcs_s(&convertedChars, filenameWc, filenameWcLength, *filenameUtf8, _TRUNCATE);
-
+  WCHAR* filename = V8StringToWCHAR(isolate, args[0]->ToString());
   int quality = args[1]->Int32Value();
   int width = args[2]->Int32Value();
   int height = args[3]->Int32Value();
-  int result = GetScreenshotResult(filenameWc, quality, width, height);
+  int result = GetScreenshotResult(filename, quality, width, height);
 
   return args.GetReturnValue().Set(Integer::New(isolate, result));
 }
