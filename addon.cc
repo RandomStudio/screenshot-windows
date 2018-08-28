@@ -14,11 +14,13 @@ namespace addon {
 
 using namespace Gdiplus;
 
+using v8::Exception;
 using v8::FunctionCallbackInfo;
+using v8::Integer;
 using v8::Isolate;
 using v8::Local;
 using v8::Object;
-using v8::Integer;
+using v8::String;
 using v8::Value;
 
 // PRIVATE FUNCTIONS
@@ -79,7 +81,7 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *filename, ULONG quality, int width, int heig
   Bitmap * originalBmp = new Bitmap(hbm, NULL);
   Bitmap * finalBmp;
 
-  if (originalBmp.GetWidth() == width && originalBmp->getHeight() == height) {
+  if (originalBmp->GetWidth() == width && originalBmp->GetHeight() == height) {
     finalBmp = originalBmp;
   } else {
     finalBmp = new Bitmap(width, height, originalBmp->GetPixelFormat());
@@ -154,7 +156,24 @@ void GetHeight(const FunctionCallbackInfo<Value>& args) {
 }
 
 void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
-  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetScreenshotResult(L"screenshot.jpg", 80, 1280, 720)));
+  Isolate* isolate = args.GetIsolate();
+
+  if (args.Length() < 3) {
+    isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
+    return;
+  }
+
+  if (!args[0]->IsNumber() || !args[1]->IsNumber() || !args[2]->IsNumber()) {
+    isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong type of arguments")));
+    return;
+  }
+
+  int quality = args[0]->Int32Value();
+  int width = args[1]->Int32Value();
+  int height = args[2]->Int32Value();
+  int result = GetScreenshotResult(L"screenshot.jpg", 80, width, height);
+
+  return args.GetReturnValue().Set(Integer::New(isolate, result));
 }
 
 // INITIALIZE
