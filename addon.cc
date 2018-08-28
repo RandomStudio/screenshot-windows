@@ -5,6 +5,7 @@
 #define ERR_FAILED_TO_BIT_BLT     -5
 
 #include "minmax.h"
+#include <cstring>
 #include <node.h>
 #include <windows.h>
 #include <gdiplus.h>
@@ -158,20 +159,26 @@ void GetHeight(const FunctionCallbackInfo<Value>& args) {
 void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = args.GetIsolate();
 
-  if (args.Length() < 3) {
+  if (args.Length() < 4) {
     isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
     return;
   }
 
-  if (!args[0]->IsNumber() || !args[1]->IsNumber() || !args[2]->IsNumber()) {
+  if (!args[0]->IsString() || !args[1]->IsNumber() || !args[2]->IsNumber() || !args[3]->IsNumber()) {
     isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong type of arguments")));
     return;
   }
 
-  int quality = args[0]->Int32Value();
-  int width = args[1]->Int32Value();
-  int height = args[2]->Int32Value();
-  int result = GetScreenshotResult(L"screenshot.jpg", 80, width, height);
+  String::Utf8Value filenameUtf8(isolate, args[0]->ToString());
+  size_t            filenameWcLength = std::strlen(*filenameUtf8) + 1;
+  WCHAR *           filenameWc = new WCHAR[filenameWcLength];
+  size_t            convertedChars = 0;
+  mbstowcs_s(&convertedChars, filenameWc, filenameWcLength, *filenameUtf8, _TRUNCATE);
+
+  int quality = args[1]->Int32Value();
+  int width = args[2]->Int32Value();
+  int height = args[3]->Int32Value();
+  int result = GetScreenshotResult(filenameWc, quality, width, height);
 
   return args.GetReturnValue().Set(Integer::New(isolate, result));
 }
