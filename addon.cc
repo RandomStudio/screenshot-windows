@@ -79,14 +79,14 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *filename, ULONG quality, int width, int heig
   Bitmap * originalBmp = new Bitmap(hbm, NULL);
   Bitmap * finalBmp;
 
-  if (width && height) {
+  if (originalBmp.GetWidth() == width && originalBmp->getHeight() == height) {
+    finalBmp = originalBmp;
+  } else {
     finalBmp = new Bitmap(width, height, originalBmp->GetPixelFormat());
     Graphics * graphics = Graphics::FromImage(finalBmp);
     graphics->SetSmoothingMode(SmoothingModeDefault);
     graphics->SetInterpolationMode(InterpolationModeBicubic);
     graphics->DrawImage(originalBmp, 0, 0, width, height);
-  } else {
-    finalBmp = originalBmp;
   }
 
   if (finalBmp->Save(filename, &encoderClsid, &encoderParameters) != Ok) {
@@ -134,10 +134,7 @@ int32_t GetScreenshotResult(WCHAR *filename, ULONG quality, int width, int heigh
     goto done;
   }
 
-  bool resize = width != screenWidth || height != screenHeight;
-  int bmpWidth = resize ? width : NULL;
-  int bmpHeight = resize ? height : NULL;
-  result = SaveBitmap(hbmScreen, filename, quality, bmpWidth, bmpHeight);
+  result = SaveBitmap(hbmScreen, filename, quality, width, height);
 
 done:
   DeleteObject(hbmScreen);
