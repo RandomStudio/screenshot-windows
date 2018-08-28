@@ -1,7 +1,7 @@
 const addon = require('bindings')('addon.node');
 
 const errorCodes = new Map([
-	[-1, 'GDI+ cannot find the JPEG encoder'],
+	[-1, 'GDI+ cannot find the requested encoder'],
 	[-2, 'Failed to save the JPEG to disk'],
 	[-3, 'Failed to create a compatible memory device context'],
 	[-4, 'Failed to create a compatible bitmap from the Window device context'],

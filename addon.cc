@@ -1,4 +1,4 @@
-#define ERR_NO_JPEG_ENCODER       -1
+#define ERR_ENCODER_NOT_FOUND     -1
 #define ERR_FAILED_TO_SAVE        -2
 #define ERR_FAILED_TO_CREATE_DC   -3
 #define ERR_FAILED_TO_CREATE_BMP  -4
@@ -67,7 +67,7 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *filename, ULONG quality, int width, int heig
 
   // Get the JPEG encoder class identifier
   if (GetEncoderClsid(L"image/jpeg", &encoderClsid) < 0) {
-    result = ERR_NO_JPEG_ENCODER;
+    result = ERR_ENCODER_NOT_FOUND;
     goto done;
   }
 
