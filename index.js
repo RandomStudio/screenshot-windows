@@ -21,7 +21,7 @@ if (process.argv.includes('getHeight')) {
 }
 
 if (process.argv.includes('takeScreenshot')) {
-	console.log('result:', addon.takeScreenshot());
+	console.log('result:', addon.takeScreenshot('screenshot.jpg', 80, 1280, 720));
 }
 
 // EXPOSED FUNCTION
