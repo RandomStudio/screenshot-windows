@@ -1,3 +1,4 @@
+const path = require('path');
 const addon = require('bindings')('addon.node');
 
 const errorCodes = new Map([
@@ -10,13 +11,29 @@ const errorCodes = new Map([
 
 const unknownError = 'Result did not match with a known error code';
 
-const takeScreenshot = ({ filename, quality, width, height, fit }) => {
+const takeScreenshot = ({ filename = 'screenshot.jpg', quality = 80, width, height, fit } = {}) => {
+	const screenWidth = addon.getWidth();
+	const screenHeight = addon.getHeight();
+
 	// ensure valid argument types
-	filename = filename ? String(filename) : 'screenshot.jpg';
+	filename = String(filename);
 	quality = Math.round(Number(quality));
 	width = Math.round(Number(width));
 	height = Math.round(Number(height));
 	fit = Math.round(Number(fit));
+
+	let encoder;
+	const extension = path.extname(filename);
+	switch (extension.toLowerCase()) {
+		case '.jpg':
+		case '.jpeg':
+			encoder = 'image/jpeg';
+			break;
+		case '.png':
+			encoder = 'image/png';
+			break;
+		default: throw new Error(`Unsupported file extension: ${extension}`);
+	}
 
 	// restrict quality between 0 and 100, default to 80
 	quality = quality ? Math.max(0, Math.min(100, quality)) : 80;
