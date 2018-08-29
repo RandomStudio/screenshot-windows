@@ -132,6 +132,7 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int
     graphics->SetSmoothingMode(SmoothingModeDefault);
     graphics->SetInterpolationMode(InterpolationModeBicubic);
     graphics->DrawImage(originalBmp, 0, 0, width, height);
+    delete(graphics);
   }
 
   if (finalBmp->Save(filename, &encoderClsid, &encoderParameters) != Ok) {
