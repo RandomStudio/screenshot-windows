@@ -50,9 +50,7 @@ if (process.argv.includes('getHeight')) {
 }
 
 if (process.argv.includes('takeScreenshot')) {
-	const screenWidth = addon.getWidth();
-	const screenHeight = addon.getHeight();
-	console.log('result:', addon.takeScreenshot('image/jpeg', 'screenshot.jpg', 80, screenWidth, screenHeight));
+	console.log('result:', takeScreenshot());
 }
 
 module.exports = takeScreenshot;
