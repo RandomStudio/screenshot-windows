@@ -224,6 +224,9 @@ void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
   int height = args[4]->Int32Value();
   int result = GetScreenshotResult(encoder, filename, quality, width, height);
 
+  delete(encoder);
+  delete(filename);
+
   return args.GetReturnValue().Set(Integer::New(isolate, result));
 }
 
