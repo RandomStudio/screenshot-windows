@@ -106,7 +106,7 @@ int SaveBitmap(HBITMAP& hbm, WCHAR* encoder, WCHAR* filename, ULONG quality, int
   EncoderParameters encoderParameters;
 
   Bitmap* originalBmp = NULL;
-  Bitmap* finalBmp = NULL;
+  Bitmap* resizedBmp = NULL;
 
   // Get the JPEG encoder class identifier
   if (GetEncoderClsid(encoder, &encoderClsid) < 0) {
@@ -126,12 +126,13 @@ int SaveBitmap(HBITMAP& hbm, WCHAR* encoder, WCHAR* filename, ULONG quality, int
   // Create the GDI+ bitmap
   originalBmp = new Bitmap(hbm, NULL);
 
+  // Check if we need to resize the bitmap
+  bool needsResize = originalBmp->GetWidth() != width || originalBmp->GetHeight() != height;
+
   // Resize the bitmap if necessary
-  if (originalBmp->GetWidth() == width && originalBmp->GetHeight() == height) {
-    finalBmp = originalBmp;
-  } else {
-    finalBmp = new Bitmap(width, height, originalBmp->GetPixelFormat());
-    Graphics* graphics = Graphics::FromImage(finalBmp);
+  if (needsResize) {
+    resizedBmp = new Bitmap(width, height, originalBmp->GetPixelFormat());
+    Graphics* graphics = Graphics::FromImage(resizedBmp);
     graphics->SetSmoothingMode(SmoothingModeDefault);
     graphics->SetInterpolationMode(InterpolationModeBicubic);
     graphics->DrawImage(originalBmp, 0, 0, width, height);
@@ -139,14 +140,19 @@ int SaveBitmap(HBITMAP& hbm, WCHAR* encoder, WCHAR* filename, ULONG quality, int
   }
 
   // Save the bitmap to disk
-  if (finalBmp->Save(filename, &encoderClsid, &encoderParameters) != Ok) {
+  Status saveStatus = needsResize
+    ? resizedBmp->Save(filename, &encoderClsid, &encoderParameters)
+    : originalBmp->Save(filename, &encoderClsid, &encoderParameters);
+
+  // Check if saving succeeded
+  if (saveStatus != Ok) {
     result = ERR_FAILED_TO_SAVE;
     goto done;
   }
 
 done:
   delete(originalBmp);
-  delete(finalBmp);
+  delete(resizedBmp);
 
   GdiplusShutdown(gdiplusToken);
 
