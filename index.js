@@ -10,6 +10,9 @@ const errorCodes = new Map([
 
 const unknownError = 'Result did not match with a known error code';
 
+const takeScreenshot = ({ filename, quality, width, height, fit }) => {
+};
+
 // FUNCTION FOR TESTING WITH COMMAND LINE ARGUMENTS
 
 if (process.argv.includes('getWidth')) {
@@ -26,8 +29,4 @@ if (process.argv.includes('takeScreenshot')) {
 	console.log('result:', addon.takeScreenshot('image/jpeg', 'screenshot.jpg', 80, screenWidth, screenHeight));
 }
 
-// EXPOSED FUNCTION
-
-module.exports = () => {
-
-};
+module.exports = takeScreenshot;
