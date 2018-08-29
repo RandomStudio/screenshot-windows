@@ -63,6 +63,37 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   return -1; // Failure
 }
 
+bool EncoderHasParameter(CLSID& encoderClsid, GUID parameterGuid) {
+  bool hasParameter = false;
+
+  // Create Bitmap to call GetParameterListSize and GetParameterList.
+  Bitmap* bitmap = new Bitmap(1, 1);
+
+  // Determine the parameter list size in bytes
+  UINT listSize = 0;
+  listSize = bitmap->GetEncoderParameterListSize(&encoderClsid);
+
+  // Allocate a buffer large enough to hold the parameter list.
+  EncoderParameters* pEncoderParameters = NULL;
+  pEncoderParameters = (EncoderParameters*)malloc(listSize);
+
+  // Get the parameter list for the encoder.
+  bitmap->GetEncoderParameterList(&encoderClsid, listSize, pEncoderParameters);
+
+  // Iterate over all the EncoderParameter objects
+  for(UINT i = 0; i < pEncoderParameters->Count; ++i) {
+    if (pEncoderParameters->Parameter[i].Guid == parameterGuid) {
+      hasParameter = true;
+      break;
+    }
+  }
+
+  free(pEncoderParameters);
+  delete(bitmap);
+
+  return hasParameter;
+}
+
 int SaveBitmap(HBITMAP &hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int width, int height) {
   int result = 0;
 
@@ -80,12 +111,14 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int
     goto done;
   }
 
-  // Set quality for the JPEG encoder
-  encoderParameters.Count = 1;
-  encoderParameters.Parameter[0].Guid = EncoderQuality;
-  encoderParameters.Parameter[0].Type = EncoderParameterValueTypeLong;
-  encoderParameters.Parameter[0].NumberOfValues = 1;
-  encoderParameters.Parameter[0].Value = &quality;
+  // Set the encoder quality if available
+  if (EncoderHasParameter(encoderClsid, EncoderQuality)) {
+    encoderParameters.Count = 1;
+    encoderParameters.Parameter[0].Guid = EncoderQuality;
+    encoderParameters.Parameter[0].Type = EncoderParameterValueTypeLong;
+    encoderParameters.Parameter[0].NumberOfValues = 1;
+    encoderParameters.Parameter[0].Value = &quality;
+  }
 
   // Create the Bitmap and save it to disk as JPEG
   Bitmap * originalBmp = new Bitmap(hbm, NULL);
