@@ -48,7 +48,15 @@ const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, m
 	const screenWidth = addon.getWidth();
 	const screenHeight = addon.getHeight();
 	const aspectRatio = screenWidth / screenHeight;
-	const result = addon.takeScreenshot(filenameAbsolute, quality, width, height);
+
+	// Auto-size width or height
+	if (width && !height) {
+		height = Math.round(width / aspectRatio);
+	}
+	if (height && !width) {
+		width = Math.round(height * aspectRatio);
+	}
+	const result = addon.takeScreenshot(encoder, filenameAbsolute, quality, width, height);
 	if (result !== 0) {
 		throw(new Error(errorCodes.get(result) || unknownError));
 	}
