@@ -37,6 +37,13 @@ const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, f
 
 	// restrict quality between 0 and 100, default to 80
 	quality = quality ? Math.max(0, Math.min(100, quality)) : 80;
+	return {
+		filename,
+		filenameAbsolute,
+		quality,
+		width,
+		height
+	};
 };
 
 // FUNCTION FOR TESTING WITH COMMAND LINE ARGUMENTS
