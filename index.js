@@ -35,7 +35,8 @@ const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, f
 		default: throw new Error(`Unsupported file extension: ${extension}`);
 	}
 
-	// restrict quality between 0 and 100, default to 80
+	// Ensure valid quality, restrict between 0 and 100, default to 80
+	quality = Math.round(Number(quality));
 	quality = quality ? Math.max(0, Math.min(100, quality)) : 80;
 	return {
 		filename,
