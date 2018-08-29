@@ -11,17 +11,14 @@ const errorCodes = new Map([
 
 const unknownError = 'Result did not match with a known error code';
 
-const takeScreenshot = ({ filename = 'screenshot.jpg', quality = 80, width, height, fit } = {}) => {
-	const screenWidth = addon.getWidth();
-	const screenHeight = addon.getHeight();
+const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, fit } = {}) => {
 
-	// ensure valid argument types
-	filename = String(filename);
-	quality = Math.round(Number(quality));
-	width = Math.round(Number(width));
-	height = Math.round(Number(height));
-	fit = Math.round(Number(fit));
+	// Ensure a valid filename
+	if (typeof filename !== 'string') {
+		throw new Error('"filename" must be a string');
+	}
 
+	// Determine the image encoder
 	let encoder;
 	const extension = path.extname(filename);
 	switch (extension.toLowerCase()) {
