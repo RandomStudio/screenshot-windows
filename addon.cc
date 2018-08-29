@@ -105,6 +105,9 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int
   CLSID             encoderClsid;
   EncoderParameters encoderParameters;
 
+  Bitmap* originalBmp = NULL;
+  Bitmap* finalBmp = NULL;
+
   // Get the JPEG encoder class identifier
   if (GetEncoderClsid(encoder, &encoderClsid) < 0) {
     result = ERR_ENCODER_NOT_FOUND;
@@ -120,10 +123,10 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int
     encoderParameters.Parameter[0].Value = &quality;
   }
 
-  // Create the Bitmap and save it to disk as JPEG
-  Bitmap * originalBmp = new Bitmap(hbm, NULL);
-  Bitmap * finalBmp;
+  // Create the GDI+ bitmap
+  originalBmp = new Bitmap(hbm, NULL);
 
+  // Resize the bitmap if necessary
   if (originalBmp->GetWidth() == width && originalBmp->GetHeight() == height) {
     finalBmp = originalBmp;
   } else {
@@ -135,13 +138,18 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int
     delete(graphics);
   }
 
+  // Save the bitmap to disk
   if (finalBmp->Save(filename, &encoderClsid, &encoderParameters) != Ok) {
     result = ERR_FAILED_TO_SAVE;
     goto done;
   }
 
 done:
+  delete(originalBmp);
+  delete(finalBmp);
+
   GdiplusShutdown(gdiplusToken);
+
   return result;
 }
 
