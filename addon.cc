@@ -94,7 +94,7 @@ bool EncoderHasParameter(CLSID& encoderClsid, GUID parameterGuid) {
   return hasParameter;
 }
 
-int SaveBitmap(HBITMAP &hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int width, int height) {
+int SaveBitmap(HBITMAP& hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int width, int height) {
   int result = 0;
 
    // Initialize GDI+
