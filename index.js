@@ -38,6 +38,11 @@ const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, f
 	// Ensure valid quality, restrict between 0 and 100, default to 80
 	quality = Math.round(Number(quality));
 	quality = quality ? Math.max(0, Math.min(100, quality)) : 80;
+
+	const result = addon.takeScreenshot(filenameAbsolute, quality, width, height);
+	if (result !== 0) {
+		throw(new Error(errorCodes.get(result) || unknownError));
+	}
 	return {
 		filename,
 		filenameAbsolute,
