@@ -11,7 +11,7 @@ const errorCodes = new Map([
 
 const unknownError = 'Result did not match with a known error code';
 
-const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, fit } = {}) => {
+const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, maxSize } = {}) => {
 
 	// Ensure a valid filename
 	if (typeof filename !== 'string') {
@@ -39,6 +39,15 @@ const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, f
 	quality = Math.round(Number(quality));
 	quality = quality ? Math.max(0, Math.min(100, quality)) : 80;
 
+	// Ensure valid integer arguments
+	width = Math.round(Number(width));
+	height = Math.round(Number(height));
+	maxSize = Math.round(Number(maxSize));
+
+	// Get screen dimensions
+	const screenWidth = addon.getWidth();
+	const screenHeight = addon.getHeight();
+	const aspectRatio = screenWidth / screenHeight;
 	const result = addon.takeScreenshot(filenameAbsolute, quality, width, height);
 	if (result !== 0) {
 		throw(new Error(errorCodes.get(result) || unknownError));
