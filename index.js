@@ -56,6 +56,24 @@ const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, m
 	if (height && !width) {
 		width = Math.round(height * aspectRatio);
 	}
+
+	// Restrict dimensions by max size
+	if (maxSize) {
+		if (aspectRatio > 1) {
+			// Use width to determine dimensions
+			width = width ? Math.min(width, maxSize) : maxSize;
+			height = Math.round(width / aspectRatio);
+		} else {
+			// Use height to determine dimensions
+			height = height ? Math.min(height, maxSize) : maxSize;
+			width = Math.round(height * aspectRatio);
+		}
+	}
+
+	// Use screen dimensions if not resolved
+	if (!width) width = screenWidth;
+	if (!height) height = screenHeight;
+
 	const result = addon.takeScreenshot(encoder, filenameAbsolute, quality, width, height);
 	if (result !== 0) {
 		throw(new Error(errorCodes.get(result) || unknownError));
