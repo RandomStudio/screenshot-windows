@@ -63,7 +63,7 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   return -1; // Failure
 }
 
-int SaveBitmap(HBITMAP &hbm, WCHAR *filename, ULONG quality, int width, int height) {
+int SaveBitmap(HBITMAP &hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int width, int height) {
   int result = 0;
 
    // Initialize GDI+
@@ -75,7 +75,7 @@ int SaveBitmap(HBITMAP &hbm, WCHAR *filename, ULONG quality, int width, int heig
   EncoderParameters encoderParameters;
 
   // Get the JPEG encoder class identifier
-  if (GetEncoderClsid(L"image/jpeg", &encoderClsid) < 0) {
+  if (GetEncoderClsid(encoder, &encoderClsid) < 0) {
     result = ERR_ENCODER_NOT_FOUND;
     goto done;
   }
@@ -111,7 +111,7 @@ done:
   return result;
 }
 
-int32_t GetScreenshotResult(WCHAR *filename, ULONG quality, int width, int height) {
+int32_t GetScreenshotResult(WCHAR *encoder, WCHAR *filename, ULONG quality, int width, int height) {
   int result = 0;
   int screenWidth = GetSystemMetrics(SM_CXSCREEN);
   int screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -146,7 +146,7 @@ int32_t GetScreenshotResult(WCHAR *filename, ULONG quality, int width, int heigh
     goto done;
   }
 
-  result = SaveBitmap(hbmScreen, filename, quality, width, height);
+  result = SaveBitmap(hbmScreen, encoder, filename, quality, width, height);
 
 done:
   DeleteObject(hbmScreen);
@@ -168,21 +168,28 @@ void GetHeight(const FunctionCallbackInfo<Value>& args) {
 void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = args.GetIsolate();
 
-  if (args.Length() < 4) {
+  if (args.Length() < 5) {
     isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
     return;
   }
 
-  if (!args[0]->IsString() || !args[1]->IsNumber() || !args[2]->IsNumber() || !args[3]->IsNumber()) {
+  if (
+    !args[0]->IsString() ||
+    !args[1]->IsString() ||
+    !args[2]->IsNumber() ||
+    !args[3]->IsNumber() ||
+    !args[4]->IsNumber()
+  ) {
     isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong type of arguments")));
     return;
   }
 
-  WCHAR* filename = V8StringToWCHAR(isolate, args[0]->ToString());
-  int quality = args[1]->Int32Value();
-  int width = args[2]->Int32Value();
-  int height = args[3]->Int32Value();
-  int result = GetScreenshotResult(filename, quality, width, height);
+  WCHAR* encoder = V8StringToWCHAR(isolate, args[0]->ToString());
+  WCHAR* filename = V8StringToWCHAR(isolate, args[1]->ToString());
+  int quality = args[2]->Int32Value();
+  int width = args[3]->Int32Value();
+  int height = args[4]->Int32Value();
+  int result = GetScreenshotResult(encoder, filename, quality, width, height);
 
   return args.GetReturnValue().Set(Integer::New(isolate, result));
 }
