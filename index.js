@@ -18,6 +18,9 @@ const takeScreenshot = ({ filename = 'screenshot.jpg', quality, width, height, f
 		throw new Error('"filename" must be a string');
 	}
 
+	// Determine the absolute filename
+	const filenameAbsolute = path.isAbsolute(filename) ? filename : path.resolve(process.cwd(), filename);
+
 	// Determine the image encoder
 	let encoder;
 	const extension = path.extname(filename);
