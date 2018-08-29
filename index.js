@@ -11,6 +11,12 @@ const errorCodes = new Map([
 const unknownError = 'Result did not match with a known error code';
 
 const takeScreenshot = ({ filename, quality, width, height, fit }) => {
+	// ensure valid argument types
+	filename = filename ? String(filename) : 'screenshot.jpg';
+	quality = Math.round(Number(quality));
+	width = Math.round(Number(width));
+	height = Math.round(Number(height));
+	fit = Math.round(Number(fit));
 };
 
 // FUNCTION FOR TESTING WITH COMMAND LINE ARGUMENTS
