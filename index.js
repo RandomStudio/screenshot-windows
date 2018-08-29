@@ -17,6 +17,9 @@ const takeScreenshot = ({ filename, quality, width, height, fit }) => {
 	width = Math.round(Number(width));
 	height = Math.round(Number(height));
 	fit = Math.round(Number(fit));
+
+	// restrict quality between 0 and 100, default to 80
+	quality = quality ? Math.max(0, Math.min(100, quality)) : 80;
 };
 
 // FUNCTION FOR TESTING WITH COMMAND LINE ARGUMENTS
