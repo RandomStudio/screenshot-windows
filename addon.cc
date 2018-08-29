@@ -26,10 +26,10 @@ using v8::Value;
 
 // PRIVATE FUNCTIONS
 
-WCHAR * V8StringToWCHAR(Isolate* isolate, Local<String> stringV8) {
+WCHAR* V8StringToWCHAR(Isolate* isolate, Local<String> stringV8) {
   String::Utf8Value stringUtf8(isolate, stringV8);
   size_t            stringWcharLength = std::strlen(*stringUtf8) + 1;
-  WCHAR *           stringWchar = new WCHAR[stringWcharLength];
+  WCHAR*            stringWchar = new WCHAR[stringWcharLength];
   size_t            convertedChars = 0;
   mbstowcs_s(&convertedChars, stringWchar, stringWcharLength, *stringUtf8, _TRUNCATE);
   return stringWchar;
@@ -94,7 +94,7 @@ bool EncoderHasParameter(CLSID& encoderClsid, GUID parameterGuid) {
   return hasParameter;
 }
 
-int SaveBitmap(HBITMAP& hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int width, int height) {
+int SaveBitmap(HBITMAP& hbm, WCHAR* encoder, WCHAR* filename, ULONG quality, int width, int height) {
   int result = 0;
 
    // Initialize GDI+
@@ -131,7 +131,7 @@ int SaveBitmap(HBITMAP& hbm, WCHAR *encoder, WCHAR *filename, ULONG quality, int
     finalBmp = originalBmp;
   } else {
     finalBmp = new Bitmap(width, height, originalBmp->GetPixelFormat());
-    Graphics * graphics = Graphics::FromImage(finalBmp);
+    Graphics* graphics = Graphics::FromImage(finalBmp);
     graphics->SetSmoothingMode(SmoothingModeDefault);
     graphics->SetInterpolationMode(InterpolationModeBicubic);
     graphics->DrawImage(originalBmp, 0, 0, width, height);
@@ -153,7 +153,7 @@ done:
   return result;
 }
 
-int32_t GetScreenshotResult(WCHAR *encoder, WCHAR *filename, ULONG quality, int width, int height) {
+int32_t GetScreenshotResult(WCHAR* encoder, WCHAR* filename, ULONG quality, int width, int height) {
   int result = 0;
   int screenWidth = GetSystemMetrics(SM_CXSCREEN);
   int screenHeight = GetSystemMetrics(SM_CYSCREEN);
