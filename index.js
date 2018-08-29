@@ -21,7 +21,9 @@ if (process.argv.includes('getHeight')) {
 }
 
 if (process.argv.includes('takeScreenshot')) {
-	console.log('result:', addon.takeScreenshot('screenshot.jpg', 80, 1280, 720));
+	const screenWidth = addon.getWidth();
+	const screenHeight = addon.getHeight();
+	console.log('result:', addon.takeScreenshot('image/jpeg', 'screenshot.jpg', 80, screenWidth, screenHeight));
 }
 
 // EXPOSED FUNCTION
