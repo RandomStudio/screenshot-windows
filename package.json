@@ -2,6 +2,7 @@
   "name": "screenshot-windows",
   "version": "1.0.0",
   "description": "Utility for taking screenshots on Windows",
+  "keywords": ["screenshot", "desktop", "capture", "print", "screen", "printscreen", "windows"],
   "main": "index.js",
   "scripts": {
     "getWidth": "node . getWidth",
