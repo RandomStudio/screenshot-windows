@@ -35,8 +35,8 @@ using v8::Value;
 
 #ifdef _WIN32
 
-  WCHAR* V8StringToWCHAR(Local<String> stringV8) {
-    String::Utf8Value stringUtf8(stringV8);
+  WCHAR* V8StringToWCHAR(Isolate* isolate, Local<String> stringV8) {
+    String::Utf8Value stringUtf8(isolate, stringV8);
     size_t            stringWcharLength = std::strlen(*stringUtf8) + 1;
     WCHAR*            stringWchar = new WCHAR[stringWcharLength];
     size_t            convertedChars = 0;
@@ -252,8 +252,8 @@ void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
       return;
     }
 
-    WCHAR* encoder = V8StringToWCHAR(args[0]->ToString());
-    WCHAR* filename = V8StringToWCHAR(args[1]->ToString());
+    WCHAR* encoder = V8StringToWCHAR(isolate, args[0]->ToString());
+    WCHAR* filename = V8StringToWCHAR(isolate, args[1]->ToString());
     int quality = args[2]->Int32Value();
     int width = args[3]->Int32Value();
     int height = args[4]->Int32Value();
