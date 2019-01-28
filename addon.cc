@@ -220,7 +220,7 @@ void GetWidth(const FunctionCallbackInfo<Value>& args) {
   #ifdef _WIN32
     return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetSystemMetrics(SM_CXSCREEN)));
   #else
-    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), 0));
+    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), -1));
   #endif
 }
 
@@ -228,7 +228,7 @@ void GetHeight(const FunctionCallbackInfo<Value>& args) {
   #ifdef _WIN32
     return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetSystemMetrics(SM_CYSCREEN)));
   #else
-    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), 0));
+    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), -1));
   #endif
 }
 
