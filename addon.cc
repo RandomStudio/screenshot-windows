@@ -5,11 +5,11 @@
 #define ERR_FAILED_TO_BIT_BLT     -5
 #define ERR_NO_WINDOWS            -6
 
-#include "minmax.h"
-#include <cstring>
 #include <node.h>
 
 #ifdef _WIN32
+  #include "minmax.h"
+  #include <cstring>
   #include <windows.h>
   #include <gdiplus.h>
   #pragma comment(lib, "gdiplus")
