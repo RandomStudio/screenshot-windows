@@ -7,6 +7,7 @@ const errorCodes = new Map([
 	[-3, 'Failed to create a compatible memory device context'],
 	[-4, 'Failed to create a compatible bitmap from the Window device context'],
 	[-5, 'Failed to bit block transfer into compatible memory device context'],
+	[-6, 'The screenshot capturing functionality only works on Windows'],
 ]);
 
 const unknownError = 'Result did not match with a known error code';

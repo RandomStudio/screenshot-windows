@@ -3,17 +3,24 @@
 #define ERR_FAILED_TO_CREATE_DC   -3
 #define ERR_FAILED_TO_CREATE_BMP  -4
 #define ERR_FAILED_TO_BIT_BLT     -5
+#define ERR_NO_WINDOWS            -6
 
 #include "minmax.h"
 #include <cstring>
 #include <node.h>
-#include <windows.h>
-#include <gdiplus.h>
-#pragma comment(lib, "gdiplus")
+
+#ifdef _WIN32
+  #include <windows.h>
+  #include <gdiplus.h>
+  #pragma comment(lib, "gdiplus")
+#endif
+
 
 namespace addon {
 
-using namespace Gdiplus;
+#ifdef _WIN32
+  using namespace Gdiplus;
+#endif
 
 using v8::Exception;
 using v8::FunctionCallbackInfo;
@@ -26,223 +33,239 @@ using v8::Value;
 
 // PRIVATE FUNCTIONS
 
-WCHAR* V8StringToWCHAR(Local<String> stringV8) {
-  String::Utf8Value stringUtf8(stringV8);
-  size_t            stringWcharLength = std::strlen(*stringUtf8) + 1;
-  WCHAR*            stringWchar = new WCHAR[stringWcharLength];
-  size_t            convertedChars = 0;
-  mbstowcs_s(&convertedChars, stringWchar, stringWcharLength, *stringUtf8, _TRUNCATE);
-  return stringWchar;
-}
+#ifdef _WIN32
 
-int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
-  UINT num = 0;  // number of image encoders
-  UINT size = 0; // size of the image encoder array in bytes
+  WCHAR* V8StringToWCHAR(Local<String> stringV8) {
+    String::Utf8Value stringUtf8(stringV8);
+    size_t            stringWcharLength = std::strlen(*stringUtf8) + 1;
+    WCHAR*            stringWchar = new WCHAR[stringWcharLength];
+    size_t            convertedChars = 0;
+    mbstowcs_s(&convertedChars, stringWchar, stringWcharLength, *stringUtf8, _TRUNCATE);
+    return stringWchar;
+  }
 
-  ImageCodecInfo* pImageCodecInfo = NULL;
+  int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
+    UINT num = 0;  // number of image encoders
+    UINT size = 0; // size of the image encoder array in bytes
 
-  GetImageEncodersSize(&num, &size);
-  if(size == 0)
-    return -1; // Failure
+    ImageCodecInfo* pImageCodecInfo = NULL;
 
-  pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
-  if(pImageCodecInfo == NULL)
-    return -1; // Failure
+    GetImageEncodersSize(&num, &size);
+    if(size == 0)
+      return -1; // Failure
 
-  GetImageEncoders(num, size, pImageCodecInfo);
+    pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
+    if(pImageCodecInfo == NULL)
+      return -1; // Failure
 
-  for (UINT j = 0; j < num; ++j) {
-    if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0) {
-      *pClsid = pImageCodecInfo[j].Clsid;
-      free(pImageCodecInfo);
-      return j; // Success
+    GetImageEncoders(num, size, pImageCodecInfo);
+
+    for (UINT j = 0; j < num; ++j) {
+      if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0) {
+        *pClsid = pImageCodecInfo[j].Clsid;
+        free(pImageCodecInfo);
+        return j; // Success
+      }
     }
+
+    free(pImageCodecInfo);
+    return -1; // Failure
   }
 
-  free(pImageCodecInfo);
-  return -1; // Failure
-}
+  bool EncoderHasParameter(CLSID& encoderClsid, GUID parameterGuid) {
+    bool hasParameter = false;
 
-bool EncoderHasParameter(CLSID& encoderClsid, GUID parameterGuid) {
-  bool hasParameter = false;
+    // Create Bitmap to call GetParameterListSize and GetParameterList.
+    Bitmap* bitmap = new Bitmap(1, 1);
 
-  // Create Bitmap to call GetParameterListSize and GetParameterList.
-  Bitmap* bitmap = new Bitmap(1, 1);
+    // Determine the parameter list size in bytes
+    UINT listSize = 0;
+    listSize = bitmap->GetEncoderParameterListSize(&encoderClsid);
 
-  // Determine the parameter list size in bytes
-  UINT listSize = 0;
-  listSize = bitmap->GetEncoderParameterListSize(&encoderClsid);
+    // Allocate a buffer large enough to hold the parameter list.
+    EncoderParameters* pEncoderParameters = NULL;
+    pEncoderParameters = (EncoderParameters*)malloc(listSize);
 
-  // Allocate a buffer large enough to hold the parameter list.
-  EncoderParameters* pEncoderParameters = NULL;
-  pEncoderParameters = (EncoderParameters*)malloc(listSize);
+    // Get the parameter list for the encoder.
+    bitmap->GetEncoderParameterList(&encoderClsid, listSize, pEncoderParameters);
 
-  // Get the parameter list for the encoder.
-  bitmap->GetEncoderParameterList(&encoderClsid, listSize, pEncoderParameters);
-
-  // Iterate over all the EncoderParameter objects
-  for(UINT i = 0; i < pEncoderParameters->Count; ++i) {
-    if (pEncoderParameters->Parameter[i].Guid == parameterGuid) {
-      hasParameter = true;
-      break;
+    // Iterate over all the EncoderParameter objects
+    for(UINT i = 0; i < pEncoderParameters->Count; ++i) {
+      if (pEncoderParameters->Parameter[i].Guid == parameterGuid) {
+        hasParameter = true;
+        break;
+      }
     }
+
+    free(pEncoderParameters);
+    delete(bitmap);
+
+    return hasParameter;
   }
 
-  free(pEncoderParameters);
-  delete(bitmap);
+  int SaveBitmap(HBITMAP& hbm, WCHAR* encoder, WCHAR* filename, ULONG quality, int width, int height) {
+    int result = 0;
 
-  return hasParameter;
-}
+     // Initialize GDI+
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
-int SaveBitmap(HBITMAP& hbm, WCHAR* encoder, WCHAR* filename, ULONG quality, int width, int height) {
-  int result = 0;
+    CLSID             encoderClsid;
+    EncoderParameters encoderParameters;
 
-   // Initialize GDI+
-  GdiplusStartupInput gdiplusStartupInput;
-  ULONG_PTR gdiplusToken;
-  GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+    Bitmap* originalBmp = NULL;
+    Bitmap* resizedBmp = NULL;
 
-  CLSID             encoderClsid;
-  EncoderParameters encoderParameters;
+    // Get the JPEG encoder class identifier
+    if (GetEncoderClsid(encoder, &encoderClsid) < 0) {
+      result = ERR_ENCODER_NOT_FOUND;
+      goto done;
+    }
 
-  Bitmap* originalBmp = NULL;
-  Bitmap* resizedBmp = NULL;
+    // Set the encoder quality if available
+    if (EncoderHasParameter(encoderClsid, EncoderQuality)) {
+      encoderParameters.Count = 1;
+      encoderParameters.Parameter[0].Guid = EncoderQuality;
+      encoderParameters.Parameter[0].Type = EncoderParameterValueTypeLong;
+      encoderParameters.Parameter[0].NumberOfValues = 1;
+      encoderParameters.Parameter[0].Value = &quality;
+    }
 
-  // Get the JPEG encoder class identifier
-  if (GetEncoderClsid(encoder, &encoderClsid) < 0) {
-    result = ERR_ENCODER_NOT_FOUND;
-    goto done;
+    // Create the GDI+ bitmap
+    originalBmp = new Bitmap(hbm, NULL);
+
+    // Check if we need to resize the bitmap
+    bool needsResize = originalBmp->GetWidth() != width || originalBmp->GetHeight() != height;
+
+    // Resize the bitmap if necessary
+    if (needsResize) {
+      resizedBmp = new Bitmap(width, height, originalBmp->GetPixelFormat());
+      Graphics* graphics = Graphics::FromImage(resizedBmp);
+      graphics->SetSmoothingMode(SmoothingModeDefault);
+      graphics->SetInterpolationMode(InterpolationModeBicubic);
+      graphics->DrawImage(originalBmp, 0, 0, width, height);
+      delete(graphics);
+    }
+
+    // Save the bitmap to disk
+    Status saveStatus = needsResize
+      ? resizedBmp->Save(filename, &encoderClsid, &encoderParameters)
+      : originalBmp->Save(filename, &encoderClsid, &encoderParameters);
+
+    // Check if saving succeeded
+    if (saveStatus != Ok) {
+      result = ERR_FAILED_TO_SAVE;
+      goto done;
+    }
+
+  done:
+    delete(originalBmp);
+    delete(resizedBmp);
+
+    GdiplusShutdown(gdiplusToken);
+
+    return result;
   }
 
-  // Set the encoder quality if available
-  if (EncoderHasParameter(encoderClsid, EncoderQuality)) {
-    encoderParameters.Count = 1;
-    encoderParameters.Parameter[0].Guid = EncoderQuality;
-    encoderParameters.Parameter[0].Type = EncoderParameterValueTypeLong;
-    encoderParameters.Parameter[0].NumberOfValues = 1;
-    encoderParameters.Parameter[0].Value = &quality;
+  int32_t GetScreenshotResult(WCHAR* encoder, WCHAR* filename, ULONG quality, int width, int height) {
+    int result = 0;
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    HDC hdcScreen;
+    HDC hdcMemDC = NULL;
+    HBITMAP hbmScreen = NULL;
+
+    // Retrieve the handle to the display device context for the screen
+    hdcScreen = GetDC(NULL);
+
+    // Create a compatible DC which is used in a BitBlt from the window DC
+    hdcMemDC = CreateCompatibleDC(hdcScreen);
+    if(!hdcMemDC) {
+      result = ERR_FAILED_TO_CREATE_DC;
+      goto done;
+    }
+
+    // Create a compatible bitmap from the Window DC
+    hbmScreen = CreateCompatibleBitmap(hdcScreen, screenWidth, screenHeight);
+    if (!hbmScreen) {
+      result = ERR_FAILED_TO_CREATE_BMP;
+      goto done;
+    }
+
+    // Select the compatible bitmap into the compatible memory DC
+    SelectObject(hdcMemDC, hbmScreen);
+
+    // Bit block transfer into our compatible memory DC
+    if(!BitBlt(hdcMemDC, 0, 0, screenWidth, screenHeight, hdcScreen, 0, 0, SRCCOPY)) {
+      result = ERR_FAILED_TO_BIT_BLT;
+      goto done;
+    }
+
+    result = SaveBitmap(hbmScreen, encoder, filename, quality, width, height);
+
+  done:
+    DeleteObject(hbmScreen);
+    DeleteObject(hdcMemDC);
+    ReleaseDC(NULL, hdcScreen);
+    return result;
   }
 
-  // Create the GDI+ bitmap
-  originalBmp = new Bitmap(hbm, NULL);
-
-  // Check if we need to resize the bitmap
-  bool needsResize = originalBmp->GetWidth() != width || originalBmp->GetHeight() != height;
-
-  // Resize the bitmap if necessary
-  if (needsResize) {
-    resizedBmp = new Bitmap(width, height, originalBmp->GetPixelFormat());
-    Graphics* graphics = Graphics::FromImage(resizedBmp);
-    graphics->SetSmoothingMode(SmoothingModeDefault);
-    graphics->SetInterpolationMode(InterpolationModeBicubic);
-    graphics->DrawImage(originalBmp, 0, 0, width, height);
-    delete(graphics);
-  }
-
-  // Save the bitmap to disk
-  Status saveStatus = needsResize
-    ? resizedBmp->Save(filename, &encoderClsid, &encoderParameters)
-    : originalBmp->Save(filename, &encoderClsid, &encoderParameters);
-
-  // Check if saving succeeded
-  if (saveStatus != Ok) {
-    result = ERR_FAILED_TO_SAVE;
-    goto done;
-  }
-
-done:
-  delete(originalBmp);
-  delete(resizedBmp);
-
-  GdiplusShutdown(gdiplusToken);
-
-  return result;
-}
-
-int32_t GetScreenshotResult(WCHAR* encoder, WCHAR* filename, ULONG quality, int width, int height) {
-  int result = 0;
-  int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-  int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-  HDC hdcScreen;
-  HDC hdcMemDC = NULL;
-  HBITMAP hbmScreen = NULL;
-
-  // Retrieve the handle to the display device context for the screen
-  hdcScreen = GetDC(NULL);
-
-  // Create a compatible DC which is used in a BitBlt from the window DC
-  hdcMemDC = CreateCompatibleDC(hdcScreen);
-  if(!hdcMemDC) {
-    result = ERR_FAILED_TO_CREATE_DC;
-    goto done;
-  }
-
-  // Create a compatible bitmap from the Window DC
-  hbmScreen = CreateCompatibleBitmap(hdcScreen, screenWidth, screenHeight);
-  if (!hbmScreen) {
-    result = ERR_FAILED_TO_CREATE_BMP;
-    goto done;
-  }
-
-  // Select the compatible bitmap into the compatible memory DC
-  SelectObject(hdcMemDC, hbmScreen);
-
-  // Bit block transfer into our compatible memory DC
-  if(!BitBlt(hdcMemDC, 0, 0, screenWidth, screenHeight, hdcScreen, 0, 0, SRCCOPY)) {
-    result = ERR_FAILED_TO_BIT_BLT;
-    goto done;
-  }
-
-  result = SaveBitmap(hbmScreen, encoder, filename, quality, width, height);
-
-done:
-  DeleteObject(hbmScreen);
-  DeleteObject(hdcMemDC);
-  ReleaseDC(NULL, hdcScreen);
-  return result;
-}
+#endif
 
 // EXPOSED FUNCTIONS
 
 void GetWidth(const FunctionCallbackInfo<Value>& args) {
-  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetSystemMetrics(SM_CXSCREEN)));
+  #ifdef _WIN32
+    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetSystemMetrics(SM_CXSCREEN)));
+  #else
+    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), 0));
+  #endif
 }
 
 void GetHeight(const FunctionCallbackInfo<Value>& args) {
-  return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetSystemMetrics(SM_CYSCREEN)));
+  #ifdef _WIN32
+    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), GetSystemMetrics(SM_CYSCREEN)));
+  #else
+    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), 0));
+  #endif
 }
 
 void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
-  Isolate* isolate = args.GetIsolate();
+  #ifdef _WIN32
+    Isolate* isolate = args.GetIsolate();
 
-  if (args.Length() < 5) {
-    isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
-    return;
-  }
+    if (args.Length() < 5) {
+      isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
+      return;
+    }
 
-  if (
-    !args[0]->IsString() ||
-    !args[1]->IsString() ||
-    !args[2]->IsNumber() ||
-    !args[3]->IsNumber() ||
-    !args[4]->IsNumber()
-  ) {
-    isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong type of arguments")));
-    return;
-  }
+    if (
+      !args[0]->IsString() ||
+      !args[1]->IsString() ||
+      !args[2]->IsNumber() ||
+      !args[3]->IsNumber() ||
+      !args[4]->IsNumber()
+    ) {
+      isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong type of arguments")));
+      return;
+    }
 
-  WCHAR* encoder = V8StringToWCHAR(args[0]->ToString());
-  WCHAR* filename = V8StringToWCHAR(args[1]->ToString());
-  int quality = args[2]->Int32Value();
-  int width = args[3]->Int32Value();
-  int height = args[4]->Int32Value();
-  int result = GetScreenshotResult(encoder, filename, quality, width, height);
+    WCHAR* encoder = V8StringToWCHAR(args[0]->ToString());
+    WCHAR* filename = V8StringToWCHAR(args[1]->ToString());
+    int quality = args[2]->Int32Value();
+    int width = args[3]->Int32Value();
+    int height = args[4]->Int32Value();
+    int result = GetScreenshotResult(encoder, filename, quality, width, height);
 
-  delete(encoder);
-  delete(filename);
+    delete(encoder);
+    delete(filename);
 
-  return args.GetReturnValue().Set(Integer::New(isolate, result));
+    return args.GetReturnValue().Set(Integer::New(isolate, result));
+  #else
+    return args.GetReturnValue().Set(Integer::New(args.GetIsolate(), ERR_NO_WINDOWS));
+  #endif
 }
 
 // INITIALIZE
