@@ -237,7 +237,7 @@ void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
     Isolate* isolate = args.GetIsolate();
 
     if (args.Length() < 5) {
-      isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
+      isolate->ThrowException(Exception::TypeError("Wrong number of arguments"));
       return;
     }
 
@@ -248,7 +248,7 @@ void TakeScreenshot(const FunctionCallbackInfo<Value>& args) {
       !args[3]->IsNumber() ||
       !args[4]->IsNumber()
     ) {
-      isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong type of arguments")));
+      isolate->ThrowException(Exception::TypeError("Wrong type of arguments"));
       return;
     }
 
